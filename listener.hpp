@@ -20,7 +20,6 @@ public:
     listener(net::io_context& ioc, tcp::endpoint const& endpoint)
     : m_ioc(ioc)
     , m_acceptor(make_strand(ioc))
-    , m_strand(make_strand(ioc))
     {
         beast::error_code ec;
 
@@ -71,7 +70,6 @@ private:
     void do_accept()
     {
         std::cout << "Waiting for a new connection." << '\n';
-        auto self = shared_from_this();
         m_acceptor.async_accept
         (
             make_strand(m_ioc),
@@ -83,7 +81,7 @@ private:
         );
     }
 
-    void on_accept(beast::error_code ec, tcp::socket socket)
+    void on_accept(beast::error_code const ec, tcp::socket socket)
     {
         if (!ec)
         {
@@ -100,5 +98,4 @@ private:
 
     net::io_context& m_ioc;
     tcp::acceptor m_acceptor;
-    net::strand<net::io_context::executor_type> m_strand;
 };

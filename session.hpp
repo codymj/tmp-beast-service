@@ -13,12 +13,12 @@ namespace http = beast::http;
 namespace net = boost::asio;
 using tcp = net::ip::tcp;
 
-class session : public std::enable_shared_from_this<session>
+class session
+: public std::enable_shared_from_this<session>
 {
 public:
     explicit session(tcp::socket socket)
     : m_socket(std::move(socket))
-    , m_strand(net::make_strand(socket.get_executor()))
     {}
 
     void run()
@@ -64,5 +64,4 @@ private:
     tcp::socket m_socket;
     beast::flat_buffer m_buffer;
     http::request<http::string_body> m_req;
-    net::strand<net::io_context::executor_type> m_strand;
 };
