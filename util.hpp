@@ -13,3 +13,8 @@ inline void fail(beast::error_code const ec, char const* what)
 {
     std::cerr << what << ": " << ec.message() << "\n";
 }
+
+inline void log(std::string&& msg)
+{
+    std::cout << msg << '\n';
+}

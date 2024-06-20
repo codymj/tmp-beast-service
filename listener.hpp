@@ -14,17 +14,16 @@ namespace net = boost::asio;
 using tcp = net::ip::tcp;
 
 class listener
-: public std::enable_shared_from_this<listener>
+    : public std::enable_shared_from_this<listener>
 {
 public:
     listener(net::io_context& ioc, tcp::endpoint const& endpoint)
-    : m_ioc(ioc)
-    , m_acceptor(make_strand(ioc))
+        : m_ioc(ioc)
+        , m_acceptor(net::make_strand(ioc)) // Corrected make_strand
     {
         beast::error_code ec;
 
-        // Open acceptor.
-        std::cout << "Opening acceptor." << '\n';
+        log("Opening acceptor.");
         ec = m_acceptor.open(endpoint.protocol(), ec);
         if (ec)
         {
@@ -32,7 +31,7 @@ public:
             return;
         }
 
-        // Allow address reuse.
+        log("Setting option reuse_address.");
         ec = m_acceptor.set_option(net::socket_base::reuse_address(true), ec);
         if (ec)
         {
@@ -40,8 +39,7 @@ public:
             return;
         }
 
-        // Bind to the server address.
-        std::cout << "Binding acceptor." << '\n';
+        log("Binding acceptor.");
         ec = m_acceptor.bind(endpoint, ec);
         if (ec)
         {
@@ -49,8 +47,7 @@ public:
             return;
         }
 
-        // Begin listening for connections.
-        std::cout << "Listening on acceptor." << '\n';
+        log("Listening on acceptor.");
         ec = m_acceptor.listen(net::socket_base::max_listen_connections, ec);
         if (ec)
         {
@@ -59,20 +56,19 @@ public:
         }
     }
 
-    // Begin accepting connections.
     void run()
     {
-        std::cout << "Accepting connections." << '\n';
+        log("Starting acceptor.");
         do_accept();
     }
 
 private:
     void do_accept()
     {
-        std::cout << "Waiting for a new connection." << '\n';
+        log("Waiting for new connection.");
         m_acceptor.async_accept
         (
-            make_strand(m_ioc),
+            net::make_strand(m_ioc),
             beast::bind_front_handler
             (
                 &listener::on_accept,
@@ -81,11 +77,11 @@ private:
         );
     }
 
-    void on_accept(beast::error_code const ec, tcp::socket socket)
+    void on_accept(beast::error_code ec, tcp::socket socket)
     {
         if (!ec)
         {
-            std::cout << "Accepted new connection." << '\n';
+            log("Accepted new connection.");
             std::make_shared<session>(std::move(socket))->run();
         }
         else
@@ -93,6 +89,7 @@ private:
             fail(ec, "accept");
         }
 
+        // Continue accepting new connections.
         do_accept();
     }
 

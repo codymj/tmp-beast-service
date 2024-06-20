@@ -29,7 +29,7 @@ public:
 
     void handle()
     {
-        std::cout << "Handling request." << '\n';
+        log("Preparing response.");
         m_res.result(http::status::ok);
         m_res.set(http::field::server, "Beast");
         m_res.set(http::field::content_type, "application/json");
@@ -37,19 +37,19 @@ public:
         m_res.body() = R"({"status":"ok"})";
         m_res.prepare_payload();
 
-        auto const self = shared_from_this();
+        auto const me = shared_from_this();
         http::async_write
         (
             m_socket,
             m_res,
-            [self](beast::error_code ec, std::size_t bytes_transferred)
+            [me](beast::error_code ec, std::size_t bytes_sent)
             {
-                boost::ignore_unused(bytes_transferred);
+                boost::ignore_unused(bytes_sent);
 
-                if (!ec && self->m_res.need_eof())
+                if (!ec && me->m_res.need_eof())
                 {
-                    std::cout << "Socket closed." << '\n';
-                    ec = self->m_socket.shutdown
+                    log("Socket closed.");
+                    ec = me->m_socket.shutdown
                     (
                         tcp::socket::shutdown_send,
                         ec
@@ -61,7 +61,7 @@ public:
                     fail(ec, "write");
                 }
 
-                std::cout << "Done." << '\n';
+                log("Response sent.");
             }
         );
     }

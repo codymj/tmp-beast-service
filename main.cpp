@@ -6,6 +6,7 @@
 #include <thread>
 #include <vector>
 #include "listener.hpp"
+#include "util.hpp"
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -35,7 +36,7 @@ int main(int const argc, char* argv[])
     (
         [&](beast::error_code const&, int)
         {
-            std::cout << "Stopping I/O context." << '\n';
+            log("Stopping I/O context.");
             ioc.stop();
         }
     );
@@ -47,18 +48,17 @@ int main(int const argc, char* argv[])
     {
         thread_pool.emplace_back
         (
-            [i, &ioc]
+            [&]()
             {
-                std::cout << "Starting I/O context on thread " << i << '\n';
                 ioc.run();
             }
         );
     }
+    log("Started I/O context thread pool");
 
     // Block until all the threads exit.
     for (auto i=0; i<threads; ++i)
     {
-        std::cout << "Joining thread " << i << '\n';
         thread_pool[i].join();
     }
 

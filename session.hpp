@@ -23,19 +23,27 @@ public:
 
     void run()
     {
-        do_read();
+        net::dispatch
+        (
+            m_socket.get_executor(),
+            beast::bind_front_handler
+            (
+                &session::do_read,
+                shared_from_this()
+            )
+        );
     }
 
 private:
     void do_read()
     {
-        auto self = shared_from_this();
+        auto const me = shared_from_this();
         async_read
         (
             m_socket,
             m_buffer,
             m_req,
-            [self](beast::error_code const ec, std::size_t const bytes_sent)
+            [me](beast::error_code const ec, std::size_t const bytes_sent)
             {
                 boost::ignore_unused(bytes_sent);
 
@@ -45,8 +53,8 @@ private:
                     return;
                 }
 
-                std::cout << "Sending request to handler." << '\n';
-                self->to_handler();
+                log("Sending request to handler.");
+                me->to_handler();
             }
         );
     }
