@@ -19,7 +19,7 @@ class listener
 public:
     listener(net::io_context& ioc, tcp::endpoint const& endpoint)
         : m_ioc(ioc)
-        , m_acceptor(net::make_strand(ioc)) // Corrected make_strand
+        , m_acceptor(make_strand(ioc))
     {
         beast::error_code ec;
 
@@ -68,7 +68,7 @@ private:
         log("Waiting for new connection.");
         m_acceptor.async_accept
         (
-            net::make_strand(m_ioc),
+            make_strand(m_ioc),
             beast::bind_front_handler
             (
                 &listener::on_accept,
@@ -77,7 +77,7 @@ private:
         );
     }
 
-    void on_accept(beast::error_code ec, tcp::socket socket)
+    void on_accept(beast::error_code const& ec, tcp::socket socket)
     {
         if (!ec)
         {

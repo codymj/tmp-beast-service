@@ -48,7 +48,7 @@ int main(int const argc, char* argv[])
     {
         thread_pool.emplace_back
         (
-            [&]()
+            [&]
             {
                 ioc.run();
             }

@@ -23,15 +23,7 @@ public:
 
     void run()
     {
-        net::dispatch
-        (
-            m_socket.get_executor(),
-            beast::bind_front_handler
-            (
-                &session::do_read,
-                shared_from_this()
-            )
-        );
+        do_read();
     }
 
 private:
@@ -43,7 +35,7 @@ private:
             m_socket,
             m_buffer,
             m_req,
-            [me](beast::error_code const ec, std::size_t const bytes_sent)
+            [me](beast::error_code const& ec, std::size_t const bytes_sent)
             {
                 boost::ignore_unused(bytes_sent);
 
