@@ -61,7 +61,7 @@ public:
                     fail(ec, "write");
                 }
 
-                log("Response sent.");
+                log("Response sent.\n");
             }
         );
     }

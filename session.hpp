@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <memory>
 #include "handler.hpp"
+#include "router.hpp"
 #include "util.hpp"
 
 namespace beast = boost::beast;
@@ -46,12 +47,12 @@ private:
                 }
 
                 log("Sending request to handler.");
-                me->to_handler();
+                me->route_request();
             }
         );
     }
 
-    void to_handler()
+    void route_request()
     {
         std::make_shared<handler>
         (

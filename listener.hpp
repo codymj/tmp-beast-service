@@ -47,7 +47,7 @@ public:
             return;
         }
 
-        log("Listening on acceptor.");
+        log("Listening on acceptor.\n");
         ec = m_acceptor.listen(net::socket_base::max_listen_connections, ec);
         if (ec)
         {
@@ -58,14 +58,12 @@ public:
 
     void run()
     {
-        log("Starting acceptor.");
         do_accept();
     }
 
 private:
     void do_accept()
     {
-        log("Waiting for new connection.");
         m_acceptor.async_accept
         (
             make_strand(m_ioc),
@@ -79,9 +77,10 @@ private:
 
     void on_accept(beast::error_code const& ec, tcp::socket socket)
     {
+        log("Accepted new connection.");
+
         if (!ec)
         {
-            log("Accepted new connection.");
             std::make_shared<session>(std::move(socket))->run();
         }
         else

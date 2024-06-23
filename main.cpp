@@ -25,7 +25,7 @@ int main(int const argc, char* argv[])
     auto const threads = std::atoi(argv[3]);
 
     // The io_context is required for all I/O.
-    net::io_context ioc;
+    net::io_context ioc{threads};
 
     // Create and launch a listening port.
     std::make_shared<listener>(ioc, tcp::endpoint{address, port})->run();
@@ -34,9 +34,9 @@ int main(int const argc, char* argv[])
     net::signal_set signals(ioc, SIGINT, SIGTERM);
     signals.async_wait
     (
-        [&](beast::error_code const&, int)
+        [&ioc](beast::error_code const&, int)
         {
-            log("Stopping I/O context.");
+            log("Stopping I/O context.\n");
             ioc.stop();
         }
     );
@@ -44,17 +44,18 @@ int main(int const argc, char* argv[])
     // Run the I/O service on the requested number of threads.
     std::vector<std::thread> thread_pool;
     thread_pool.reserve(threads);
+    log("Starting I/O thread pool.\n");
     for (auto i=0; i<threads; ++i)
     {
         thread_pool.emplace_back
         (
-            [&]
+            [&ioc]
             {
                 ioc.run();
             }
         );
     }
-    log("Started I/O context thread pool");
+    ioc.run();
 
     // Block until all the threads exit.
     for (auto i=0; i<threads; ++i)
