@@ -14,7 +14,7 @@ namespace net = boost::asio;
 using tcp = net::ip::tcp;
 
 class listener
-    : public std::enable_shared_from_this<listener>
+: public std::enable_shared_from_this<listener>
 {
 public:
     listener(net::io_context& ioc, tcp::endpoint const& endpoint)
@@ -77,16 +77,13 @@ private:
 
     void on_accept(beast::error_code const& ec, tcp::socket socket)
     {
-        log("Accepted new connection.");
+        if (ec)
+        {
+            return fail(ec, "accept");
+        }
 
-        if (!ec)
-        {
-            std::make_shared<session>(std::move(socket))->run();
-        }
-        else
-        {
-            fail(ec, "accept");
-        }
+        log("Accepted new connection.");
+        std::make_shared<session>(std::move(socket))->run();
 
         // Continue accepting new connections.
         do_accept();

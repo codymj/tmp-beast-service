@@ -42,11 +42,9 @@ private:
 
                 if (ec)
                 {
-                    fail(ec, "read");
-                    return;
+                    return fail(ec, "read");
                 }
 
-                log("Sending request to handler.");
                 me->route_request();
             }
         );

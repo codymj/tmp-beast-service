@@ -19,8 +19,8 @@ public:
     explicit handler
     (
         tcp::socket& socket,
-        http::request<http::string_body>&& req,
-        http::response<http::string_body>&& res
+        http::request<http::string_body> req,
+        http::response<http::string_body> res
     )
     : m_socket(socket)
     , m_req(std::move(req))
@@ -44,9 +44,14 @@ public:
             m_res,
             [me](beast::error_code ec, std::size_t bytes_sent)
             {
+                if (ec)
+                {
+                    return fail(ec, "write");
+                }
+
                 boost::ignore_unused(bytes_sent);
 
-                if (!ec && me->m_res.need_eof())
+                if (me->m_res.need_eof())
                 {
                     log("Socket closed.");
                     ec = me->m_socket.shutdown
@@ -54,11 +59,6 @@ public:
                         tcp::socket::shutdown_send,
                         ec
                     );
-                }
-
-                if (ec)
-                {
-                    fail(ec, "write");
                 }
 
                 log("Response sent.\n");
