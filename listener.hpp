@@ -18,8 +18,8 @@ class listener
 {
 public:
     listener(net::io_context& ioc, tcp::endpoint const& endpoint)
-        : m_ioc(ioc)
-        , m_acceptor(make_strand(ioc))
+    : m_ioc(ioc)
+    , m_acceptor(make_strand(ioc))
     {
         beast::error_code ec;
 
