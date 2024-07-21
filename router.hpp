@@ -6,6 +6,7 @@
 #include <string>
 #include "not_found_handler.hpp"
 #include "status_handler.hpp"
+#include "log_middleware.hpp"
 #include "util.hpp"
 
 namespace beast = boost::beast;
@@ -19,16 +20,16 @@ using handler_func = std::function<std::shared_ptr<handler>()>;
 class router
 {
 public:
+    router(router const&) = delete;
+    router& operator=(router const&) = delete;
+    router(router&&) noexcept = delete;
+    router& operator=(router&&) noexcept = delete;
+
     static router& instance()
     {
         static router r;
         return r;
     }
-
-    router(router const&) = delete;
-    router& operator=(router const&) = delete;
-    router(router&&) noexcept = delete;
-    router& operator=(router&&) noexcept = delete;
 
     std::shared_ptr<handler> lookup_handler(route_key const& key)
     {
@@ -58,9 +59,10 @@ private:
         m_routes.insert
         ({
             route_key{http::verb::get, "/status"},
-            [&]() -> std::shared_ptr<handler>
+            []() -> std::shared_ptr<handler>
             {
-                return std::make_shared<status_handler>();
+                auto const sh = std::make_shared<status_handler>();
+                return std::make_shared<log_middleware>(sh);
             }
         });
     }

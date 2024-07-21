@@ -13,14 +13,14 @@ class not_found_handler final
 , public std::enable_shared_from_this<not_found_handler>
 {
 public:
-    explicit not_found_handler(handler* next = nullptr)
-    : m_next_handler(next)
+    explicit not_found_handler(std::shared_ptr<handler> next = nullptr)
+    : m_next_handler(std::move(next))
     {}
 
     http::message_generator handle
     (
         beast::tcp_stream& stream,
-        http::request<http::string_body> const req,
+        http::request<http::string_body> req,
         http::response<http::string_body> res
     ) override
     {
@@ -31,9 +31,21 @@ public:
         res.body() = R"({"status":"not found"})";
         res.prepare_payload();
 
-        return res;
+        if (m_next_handler)
+        {
+            return m_next_handler->handle
+            (
+                stream,
+                std::move(req),
+                std::move(res)
+            );
+        }
+        else
+        {
+            return res;
+        }
     }
 
 private:
-    handler* m_next_handler = nullptr;
+    std::shared_ptr<handler> m_next_handler = nullptr;
 };
