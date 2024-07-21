@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <cstdlib>
 #include <memory>
-#include "handler.hpp"
 #include "router.hpp"
 #include "util.hpp"
 
@@ -19,8 +18,9 @@ class session
 : public std::enable_shared_from_this<session>
 {
 public:
-    explicit session(tcp::socket socket)
+    explicit session(tcp::socket socket, router* router)
     : m_stream(std::move(socket))
+    , m_router(*router)
     {}
 
     void run()
@@ -29,75 +29,6 @@ public:
     }
 
 private:
-    template <class Body, class Allocator>
-    http::message_generator handle_request
-    (
-        http::request<Body, http::basic_fields<Allocator>>&& req
-    )
-    {
-        auto const bad_request = [&req](beast::string_view const why)
-        {
-            http::response<http::string_body> res
-            {
-                http::status::bad_request,
-                req.version()
-            };
-            res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::content_type, "application/json");
-            res.keep_alive(req.keep_alive());
-            res.body() = R"({"status":"bad request"})";
-            res.prepare_payload();
-            return res;
-        };
-
-        auto const not_found = [&req](beast::string_view const target)
-        {
-            http::response<http::string_body> res
-            {
-                http::status::not_found,
-                req.version()
-            };
-            res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::content_type, "application/json");
-            res.keep_alive(req.keep_alive());
-            res.body() = R"({"status":"not found"})";
-            res.prepare_payload();
-            return res;
-        };
-
-        auto const server_error = [&req](beast::string_view const what)
-        {
-            http::response<http::string_body> res
-            {
-                http::status::internal_server_error,
-                req.version()
-            };
-            res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::content_type, "application/json");
-            res.keep_alive(req.keep_alive());
-            res.body() = R"({"status":"internal error"})";
-            res.prepare_payload();
-            return res;
-        };
-
-        if (req.target() == "/status")
-        {
-            http::response<http::string_body> res
-            {
-                http::status::ok,
-                req.version()
-            };
-            res.set(http::field::server, "beast");
-            res.set(http::field::content_type, "application/json");
-            res.keep_alive(req.keep_alive());
-            res.body() = R"({"status":"ok"})";
-            res.prepare_payload();
-            return res;
-        }
-
-        return not_found(m_req.target());
-    }
-
     void do_read()
     {
         http::async_read
@@ -122,9 +53,14 @@ private:
             return fail(ec, "on_read");
         }
 
-        log("Read request.");
+        route_key const rk{m_req.method(), m_req.target()};
+        auto const handler = m_router.lookup_handler(rk);
 
-        send_response(handle_request(std::move(m_req)));
+        log("Routing request.");
+        send_response
+        (
+            handler->handle(m_stream, std::move(m_req), std::move(m_res))
+        );
     }
 
     void send_response(http::message_generator&& msg)
@@ -184,4 +120,6 @@ private:
     beast::tcp_stream m_stream;
     beast::flat_buffer m_buffer;
     http::request<http::string_body> m_req{};
+    http::response<http::string_body> m_res{};
+    router& m_router;
 };

@@ -5,6 +5,7 @@
 #include <boost/asio/strand.hpp>
 #include <algorithm>
 #include <memory>
+#include "router.hpp"
 #include "session.hpp"
 #include "util.hpp"
 
@@ -17,7 +18,7 @@ class listener
 : public std::enable_shared_from_this<listener>
 {
 public:
-    listener(net::any_io_executor executor, tcp::endpoint const& endpoint)
+    listener(net::any_io_executor const& executor, tcp::endpoint const& endpoint)
     : m_executor(executor)
     , m_acceptor(make_strand(executor))
     {
@@ -84,7 +85,11 @@ private:
 
         log("Accepted new connection.");
 
-        std::make_shared<session>(std::move(socket))->run();
+        std::make_shared<session>
+        (
+            std::move(socket),
+            &router::instance()
+        )->run();
 
         // Continue accepting new connections.
         do_accept();

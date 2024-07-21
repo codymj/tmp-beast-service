@@ -5,7 +5,6 @@
 #include <iostream>
 #include <memory>
 #include <thread>
-#include <vector>
 #include "listener.hpp"
 #include "util.hpp"
 
