@@ -17,9 +17,9 @@ class listener
 : public std::enable_shared_from_this<listener>
 {
 public:
-    listener(net::io_context& ioc, tcp::endpoint const& endpoint)
-    : m_ioc(ioc)
-    , m_acceptor(make_strand(ioc))
+    listener(net::any_io_executor executor, tcp::endpoint const& endpoint)
+    : m_executor(executor)
+    , m_acceptor(make_strand(executor))
     {
         beast::error_code ec;
 
@@ -27,7 +27,7 @@ public:
         ec = m_acceptor.open(endpoint.protocol(), ec);
         if (ec)
         {
-            fail(ec, "open");
+            fail(ec, "m_acceptor.open");
             return;
         }
 
@@ -35,7 +35,7 @@ public:
         ec = m_acceptor.set_option(net::socket_base::reuse_address(true), ec);
         if (ec)
         {
-            fail(ec, "set_option");
+            fail(ec, "m_acceptor.set_option");
             return;
         }
 
@@ -43,7 +43,7 @@ public:
         ec = m_acceptor.bind(endpoint, ec);
         if (ec)
         {
-            fail(ec, "bind");
+            fail(ec, "m_acceptor.bind");
             return;
         }
 
@@ -51,7 +51,7 @@ public:
         ec = m_acceptor.listen(net::socket_base::max_listen_connections, ec);
         if (ec)
         {
-            fail(ec, "listen");
+            fail(ec, "m_acceptor.listen");
             return;
         }
     }
@@ -66,7 +66,7 @@ private:
     {
         m_acceptor.async_accept
         (
-            make_strand(m_ioc),
+            make_strand(m_executor),
             beast::bind_front_handler
             (
                 &listener::on_accept,
@@ -79,16 +79,17 @@ private:
     {
         if (ec)
         {
-            return fail(ec, "accept");
+            return fail(ec, "on_accept");
         }
 
         log("Accepted new connection.");
+
         std::make_shared<session>(std::move(socket))->run();
 
         // Continue accepting new connections.
         do_accept();
     }
 
-    net::io_context& m_ioc;
+    net::any_io_executor m_executor;
     tcp::acceptor m_acceptor;
 };

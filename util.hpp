@@ -11,7 +11,7 @@ using tcp = net::ip::tcp;
 
 inline void fail(beast::error_code const& ec, char const* what)
 {
-    std::cerr << what << ": " << ec.message() << "\n";
+    std::cerr << what << ": " << ec.message() << '\n';
 }
 
 inline void log(std::string&& msg)

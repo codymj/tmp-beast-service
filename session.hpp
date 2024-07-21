@@ -43,7 +43,7 @@ private:
                 req.version()
             };
             res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::content_type, "text/html");
+            res.set(http::field::content_type, "application/json");
             res.keep_alive(req.keep_alive());
             res.body() = R"({"status":"bad request"})";
             res.prepare_payload();
@@ -58,7 +58,7 @@ private:
                 req.version()
             };
             res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::content_type, "text/html");
+            res.set(http::field::content_type, "application/json");
             res.keep_alive(req.keep_alive());
             res.body() = R"({"status":"not found"})";
             res.prepare_payload();
@@ -73,7 +73,7 @@ private:
                 req.version()
             };
             res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::content_type, "text/html");
+            res.set(http::field::content_type, "application/json");
             res.keep_alive(req.keep_alive());
             res.body() = R"({"status":"internal error"})";
             res.prepare_payload();
@@ -117,7 +117,12 @@ private:
     {
         boost::ignore_unused(bytes_sent);
 
-        if (ec) return fail(ec, "read");
+        if (ec)
+        {
+            return fail(ec, "on_read");
+        }
+
+        log("Read request.");
 
         send_response(handle_request(std::move(m_req)));
     }
@@ -148,9 +153,18 @@ private:
     {
         boost::ignore_unused(bytes_sent);
 
-        if (ec) return fail(ec, "write");
+        if (ec)
+        {
+            return fail(ec, "on_write");
+        }
 
-        if (!keep_alive) return do_close();
+        if (!keep_alive)
+        {
+            return do_close();
+        }
+
+        log("Sent response.");
+        log("");
 
         do_read();
     }
@@ -161,7 +175,10 @@ private:
 
         ec = m_stream.socket().shutdown(tcp::socket::shutdown_send, ec);
 
-        if (ec) return fail(ec, "close");
+        if (ec)
+        {
+            return fail(ec, "do_close");
+        }
     }
 
     beast::tcp_stream m_stream;
