@@ -15,7 +15,7 @@ namespace net = boost::asio;
 using tcp = net::ip::tcp;
 
 using route_key = std::pair<http::verb, std::string>;
-using handler_func = std::function<std::shared_ptr<handler>()>;
+using handler_func = std::function<std::unique_ptr<handler>()>;
 
 class router
 {
@@ -31,13 +31,13 @@ public:
         return r;
     }
 
-    std::shared_ptr<handler> lookup_handler(route_key const& key)
+    std::unique_ptr<handler> lookup_handler(route_key const& key)
     {
         handler_func const f = m_routes[key];
         if (!f)
         {
             log("Handler not found.");
-            return std::make_shared<not_found_handler>();
+            return std::make_unique<not_found_handler>();
         }
 
         return f();
@@ -59,10 +59,10 @@ private:
         m_routes.insert
         ({
             route_key{http::verb::get, "/status"},
-            []() -> std::shared_ptr<handler>
+            []() -> std::unique_ptr<handler>
             {
-                auto const sh = std::make_shared<status_handler>();
-                return std::make_shared<log_middleware>(sh);
+                auto sh = std::make_unique<status_handler>();
+                return std::make_unique<log_middleware>(std::move(sh));
             }
         });
     }

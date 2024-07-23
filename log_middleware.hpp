@@ -11,10 +11,9 @@ using tcp = net::ip::tcp;
 
 class log_middleware final
 : public handler
-, public std::enable_shared_from_this<log_middleware>
 {
 public:
-    explicit log_middleware(std::shared_ptr<handler> next = nullptr)
+    explicit log_middleware(std::unique_ptr<handler> next = nullptr)
     : m_next_handler(std::move(next))
     {}
 
@@ -35,9 +34,10 @@ public:
             );
         }
 
+        res.prepare_payload();
         return res;
     }
 
 private:
-    std::shared_ptr<handler> m_next_handler = nullptr;
+    std::unique_ptr<handler> m_next_handler;
 };

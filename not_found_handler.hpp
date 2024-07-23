@@ -11,10 +11,9 @@ using tcp = net::ip::tcp;
 
 class not_found_handler final
 : public handler
-, public std::enable_shared_from_this<not_found_handler>
 {
 public:
-    explicit not_found_handler(std::shared_ptr<handler> next = nullptr)
+    explicit not_found_handler(std::unique_ptr<handler> next = nullptr)
     : m_next_handler(std::move(next))
     {}
 
@@ -29,7 +28,6 @@ public:
         res.set(http::field::content_type, "application/json");
         res.keep_alive(req.keep_alive());
         res.body() = R"({"status":"not found"})";
-        res.prepare_payload();
 
         if (m_next_handler)
         {
@@ -40,9 +38,10 @@ public:
             );
         }
 
+        res.prepare_payload();
         return res;
     }
 
 private:
-    std::shared_ptr<handler> m_next_handler = nullptr;
+    std::unique_ptr<handler> m_next_handler;
 };
