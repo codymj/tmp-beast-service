@@ -59,7 +59,7 @@ private:
         log("Routing request.");
         send_response
         (
-            handler->handle(m_stream, std::move(m_req), std::move(m_res))
+            handler->handle(std::move(m_req), std::move(m_res))
         );
     }
 

@@ -2,6 +2,7 @@
 
 #include "handler.hpp"
 #include <memory>
+#include <utility>
 
 namespace beast = boost::beast;
 namespace http = beast::http;
@@ -19,7 +20,6 @@ public:
 
     http::message_generator handle
     (
-        beast::tcp_stream& stream,
         http::request<http::string_body> req,
         http::response<http::string_body> res
     ) override
@@ -30,15 +30,12 @@ public:
         {
             return m_next_handler->handle
             (
-                stream,
                 std::move(req),
                 std::move(res)
             );
         }
-        else
-        {
-            return res;
-        }
+
+        return res;
     }
 
 private:
